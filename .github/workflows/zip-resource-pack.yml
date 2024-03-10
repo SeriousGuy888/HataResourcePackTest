@@ -38,6 +38,13 @@ jobs:
           FILE_NAME: ${{ env.FILE_NAME }}
         run: zip -r ../${{ env.FILE_NAME }} . -x "*.git*"
 
+      - name: Generate SHA1 Hash
+        id: sha1
+        env:
+          FILE_NAME: ${{ env.FILE_NAME }} # Needed to stop the linting warning
+        run: |
+          echo "SHA1=$(sha1sum ../${{ env.FILE_NAME }} | awk '{ print $1 }')" >> $GITHUB_ENV
+
       - name: Get Timestamp
         id: get_timestamp
         uses: Kaven-Universe/github-action-current-date-time@v1
@@ -49,10 +56,14 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA1: ${{ env.SHA1 }} # Needed to stop the linting warning
         with:
           tag_name: ${{ steps.get_timestamp.outputs.time }}
           release_name: ${{ steps.get_timestamp.outputs.time }}
           body: |
+            ${{ env.SHA1 }}
+            ↑ SHA1 Hash of the zip file. Can be used for Minecraft server resource pack verification.
+            ---
             Release of ${{ github.sha }}
 
       - name: Upload Zip to Release
